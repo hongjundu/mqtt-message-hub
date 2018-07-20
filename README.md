@@ -2,9 +2,9 @@
 
 POSIX-C mqtt message hub 
 
-* for demonstration purpose
-* tested on ubuntu 64 bit
-* doesn't work on OSX
+* For demonstration purpose
+* Tested on ubuntu 64 bit
+* Doesn't work on OSX
 
 ## Before Building
 
