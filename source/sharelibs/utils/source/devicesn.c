@@ -19,14 +19,7 @@ char *get_device_sn()
     printf("get_device_sn\n");
 
     if (string_is_empty(g_deviceSN)) {
-        // char mac[32] = { 0 };
-        // memset(mac, 0, sizeof(mac));
-        // if (get_mac_string(mac) == 0) {
-        //     snprintf(g_deviceSN, sizeof(g_deviceSN) - 1, "%s", mac);
-        // }
-
         strcpy(g_deviceSN, "SN0000000001");
-
         string_upper_case(g_deviceSN);
     }
 
