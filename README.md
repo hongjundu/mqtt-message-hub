@@ -15,20 +15,20 @@ POSIX-C mqtt message hub
 
 - Local Build
 
-    cd ./source
-    make
+        cd ./source
+        make
 
 - Cross Build
 
-    cd ./source
-    make CROSS=arm-linux-gnueabihf- TARGET_FOLDER=arm
+        cd ./source
+        make CROSS=arm-linux-gnueabihf- TARGET_FOLDER=arm
 
 ## Run
     
     cd ./build/local/bin
     ./mqttmsghub
 
-## Send MQTT Message via ```mqttmsghub``` HTTP API
+## Send mqtt Message via ```mqttmsghub``` HTTP API
 
     data='{"topic":"test","payload":{"Hello":"World","Content":"This is a test message"}}'
     url='http://127.0.0.1:8066/mqtt/send'
