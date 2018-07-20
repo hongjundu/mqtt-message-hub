@@ -3,7 +3,7 @@
  *  This file is a part of mqttmsghub
  *
  *  Created by Du Hongjun on 2018/02.
- *  Copyright 2018 ihangmei.com All rights reserved.
+ *  Copyright 2018 All rights reserved.
  */
 
 #pragma once
