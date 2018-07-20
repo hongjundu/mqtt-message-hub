@@ -4,7 +4,7 @@ POSIX-C mqtt message hub
 
 ## Notice
 
-This project is only for demonstration purpose
+This project is only for demonstration purpose, verified on ubuntu64
 
 ## Usage
 
@@ -22,7 +22,7 @@ This project is only for demonstration purpose
     
     ./build/local/bin/mqttmsghub
 
-### Send Message via **mqttmsghub** HTTP API
+### Send MQTT Message via ```mqttmsghub``` HTTP API
 
     data='{"topic":"test","payload":{"Hello":"World","Content":"This is a test message"}}'
     url='http://127.0.0.1:8066/mqtt/send'
