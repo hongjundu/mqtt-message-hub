@@ -1,0 +1,25 @@
+
+# CROSS and TARGET_FOLDER can be passed from make arguments: make CROSS=arm-linux-gnueabihf- TARGET_FOLDER=arm64
+
+export CROSS:=
+TARGET_FOLDER:=local
+
+export CC:=$(CROSS)$(COMPILER)
+export AR:=$(CROSS)ar
+export OBJCOPY:=$(CROSS)objcopy
+
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+    OBJCOPY:=$(CROSS)gobjcopy   # OSX: brew install crosstool-ng
+    CFLAGS := -DSTB -D_GNU_SOURCE -D__USE_XOPEN -g -Wall -static -Werror=incompatible-pointer-types -Werror=implicit-function-declaration
+else
+    CFLAGS := -DSTB -D_GNU_SOURCE -D__USE_XOPEN -s -Wall -static
+endif
+
+ifneq ($(ADD_CFLAGS), )
+    CFLAGS += $(ADD_CFLAGS)
+endif
+
+export TARGET_FOLDER
+
+

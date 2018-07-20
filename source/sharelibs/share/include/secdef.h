@@ -1,0 +1,6 @@
+#pragma once
+
+#define MQTT_USER             "user"
+#define MQTT_PASSWD           "password"
+#define CBC_ENCRYPT_KEY       {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}
+#define CMD_PUBLIC_KEY_STRING "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDm+XHjaE4nYMqkF9kFBaHDl64CIsIewarfvRcDu2jeVgR5EMbCtCYVBlMrt3eHNsl3ic/7n3Rxgqim5EcIYtEf7L+Ylssrv7QpDac7dslLBezn52ALzlBJAiCKskoAUk/J1X06ONAUjD1MVbgQhoBDqpVFSyibGUamcc32HfIoJQIDAQAB"

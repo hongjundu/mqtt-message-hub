@@ -1,0 +1,180 @@
+.PHONY: all clean
+
+MKDIR = mkdir -p
+RM = rm
+RMFLAGS = -fr
+ARFLAGS = crs
+
+include $(ROOT_DIR)/make/make.param
+include $(ROOT_DIR)/make/common.config
+
+CFLAGS += -DLINUX
+CFLAGS += -O2
+
+ifneq ($(EXE),  )
+MOD_NAME := $(patsubst %.exe,  %, $(notdir $(EXE)))
+MOD_NAME := $(strip $(subst lib, , $(MOD_NAME)))
+endif
+
+ifneq ($(LIB), )
+MOD_NAME := $(patsubst %.a,  %, $(notdir $(LIB)))
+MOD_NAME := $(strip $(subst lib, , $(MOD_NAME)))
+endif
+
+ifneq ($(DLL),  )
+MOD_NAME := $(patsubst %.so,  %, $(notdir $(DLL)))
+MOD_NAME := $(strip $(subst lib, , $(MOD_NAME)))
+CFLAGS += -fPIC
+endif
+
+ifeq ($(BLD_DIR),  )
+BLD_DIR = $(ROOT_DIR)/build
+endif
+
+DIR_OBJS = $(BLD_DIR)/$(TARGET_FOLDER)/obj/$(MOD_NAME)
+DIR_DEPS = $(BLD_DIR)/$(TARGET_FOLDER)/dep/$(MOD_NAME)
+
+ifeq ($(DIR_EXES),  )
+DIR_EXES = $(BLD_DIR)/$(TARGET_FOLDER)/bin
+endif
+
+ifeq ($(DIR_LIBS),  )
+DIR_LIBS = $(BLD_DIR)/$(TARGET_FOLDER)/lib
+endif
+
+ifneq ($(ADD_LIB_DIRS), )
+DIR_LIBS += -L$(ADD_LIB_DIRS)
+endif
+
+ifeq ($(suffix $(EXE)), .ext)
+	DIR_EXES := $(DIR_EXES)/ext
+endif
+
+DIRS = $(DIR_DEPS) $(DIR_OBJS) $(DIR_EXES) $(DIR_LIBS)
+
+RMS = $(DIR_OBJS) $(DIR_DEPS)
+
+
+ifeq ($(wildcard $(DIR_OBJS)), )
+	OBJS_DIR_DEP := $(DIR_OBJS)
+endif
+
+ifeq ($(wildcard $(DIR_EXES)), )
+	EXES_DIR_DEP := $(DIR_EXES)
+endif
+
+ifeq ($(wildcard $(DIR_DEPS)), )
+	DEPS_DIR_DEP := $(DIR_DEPS)
+endif
+
+ifeq ($(wildcard $(DIR_LIBS)), )
+	LIBS_DIR_DEP := $(DIR_LIBS)
+endif
+
+ifneq ($(EXE), )
+	EXE := $(addprefix $(DIR_EXES)/, $(EXE))
+	RMS += $(EXE)
+	ifneq ($(INSTALL_FILES), )
+		INSTALL_FILES_CMD = -cp $(INSTALL_FILES) $(DIR_EXES)
+	else
+		INSTALL_FILES_CMD = @echo 
+	endif
+endif
+
+ifneq ($(LIB), )
+	LIB := $(addprefix $(DIR_LIBS)/, $(LIB))
+	RMS += $(LIB)
+endif
+
+ifneq ($(DLL), )
+	DLL := $(addprefix $(DIR_EXES)/, $(DLL))
+	RMS += $(DLL)
+endif
+
+SRCS = $(wildcard *.cpp *.c)
+OBJS = $(SRCS:.cpp=.o)
+OBJS := $(OBJS:.c=.o)
+OBJS := $(addprefix $(DIR_OBJS)/, $(OBJS))
+DEPS = $(SRCS:.cpp=.d)
+DEPS := $(DEPS:.c=.d)
+DEPS := $(addprefix $(DIR_DEPS)/, $(DEPS))
+
+ifneq ($(EXE), )
+all: $(EXE)
+endif
+
+ifneq ($(LIB), )
+all: $(LIB)
+endif
+
+ifneq ($(DLL), )
+all: $(DLL)
+endif
+
+ifneq ($(MAKECMDGOALS), clean)
+include $(DEPS)
+endif
+
+ifneq ($(INC_DIRS), )
+INC_DIRS := $(strip $(INC_DIRS))
+INC_DIRS := $(addprefix -I, $(INC_DIRS))
+INC_DIRS += $(addprefix -I, $(ROOT_DIR)/include)
+endif
+
+ifneq ($(LINK_LIBS), )
+LINK_LIBS := $(strip $(LINK_LIBS))
+LIB_ALL := $(wildcard $(DIR_LIBS)/*)
+LIB_ALL := $(notdir $(LIB_ALL))
+LIB_FILTER := $(addprefix lib, $(LINK_LIBS))
+LIB_FILTER := $(addsuffix %, $(LIB_FILTER))
+$(eval EXE_DEP_LIBS = $(filter $(LIB_FILTER), $(LIB_ALL)))
+EXE_DEP_LIBS := $(addprefix $(DIR_LIBS)/, $(EXE_DEP_LIBS))
+LINK_LIBS := $(addprefix -l, $(LINK_LIBS))
+endif
+
+#LINK_LIBS += $(shell mysql_config --libs)
+
+$(DIRS):
+	$(MKDIR) $@
+
+$(EXE): $(EXES_DIR_DEP) $(OBJS) $(EXE_DEP_LIBS)
+	#$(CC) -L$(DIR_LIBS) -o $@ $(filter %.o, $^) -Xlinker "-(" $(LINK_LIBS) -Xlinker "-)"
+	$(CC) -L$(DIR_LIBS) -o $@ $(filter %.o, $^)  $(LINK_LIBS) 
+
+	$(OBJCOPY) --strip-debug $@ $(basename $@)
+	$(INSTALL_FILES_CMD)
+	@$(RM) $@
+
+$(LIB): $(LIBS_DIR_DEP) $(OBJS)
+	$(AR) $(ARFLAGS) $@ $(filter %.o, $^)
+
+$(DLL): $(EXES_DIR_DEP) $(OBJS)
+	$(CC) -shared -Wl,-soname,$@ -o $@ $(filter %.o, $^)
+
+$(DIR_OBJS)/%.o: $(OBJS_DIR_DEP) %.cpp
+	@echo
+	$(CC) $(CFLAGS) $(EXTRA_FLAGS) $(INC_DIRS) -o $@ -c $(filter %.cpp, $^)
+	
+$(DIR_OBJS)/%.o: $(OBJS_DIR_DEP) %.c
+	@echo "Building " $@
+	@$(CC) $(CFLAGS) $(EXTRA_FLAGS) $(INC_DIRS) -o $@ -c $(filter %.c, $^)
+
+$(DIR_DEPS)/%.d: $(DEPS_DIR_DEP) %.cpp
+	@echo "Making $@ ..."
+	@set -e ; \
+	$(RM) $(RMFLAGS) $@.tmp ; \
+	$(CC) $(CFLAGS) $(INC_DIRS) -E -MM $(filter %.cpp, $^) > $@.tmp ; \
+	sed 's,\(.*\)\.o[ :]*,$(DIR_OBJS)/\1.o $@: ,g' < $@.tmp > $@ ; \
+	$(RM) $(RMFLAGS) $@.tmp
+	
+$(DIR_DEPS)/%.d: $(DEPS_DIR_DEP) %.c
+	@echo "Making $@ ..."
+	@set -e ; \
+	$(RM) $(RMFLAGS) $@.tmp ; \
+	$(CC) $(CFLAGS) $(INC_DIRS) -E -MM $(filter %.c, $^) > $@.tmp ; \
+	sed 's,\(.*\)\.o[ :]*,$(DIR_OBJS)/\1.o $@: ,g' < $@.tmp > $@ ; \
+	$(RM) $(RMFLAGS) $@.tmp
+	
+clean:
+	$(RM) $(RMFLAGS) $(RMS)
+
